@@ -1,4 +1,5 @@
 from rest_framework import generics, permissions
+from rest_framework.permissions import IsAdminUser, AllowAny
 from .models import Resource
 from .serializer import ResourceSerializer
 
@@ -17,13 +18,18 @@ class ResourceListCreateAPIView(generics.ListCreateAPIView):
         if location is not None:
             queryset = queryset.filter(location__icontains=location)
         if capacity is not None:
-            queryset = queryset.filter(capacity__gte=capacity)
-        return queryset
+            try:
+                queryset = queryset.filter(capacity__gte=int(capacity))
+            except ValueError:
+                pass
     
+    permission_classes_by_action = {
+        'list': [AllowAny],
+        'create': [IsAdminUser],
+    }
+
     def get_permissions(self):
-        if self.request.method == 'POST':
-            return [permissions.IsAdminUser()]
-        return [permissions.AllowAny()]
+        return [perm() for perm in self.permission_classes_by_action.get(self.action, [AllowAny])]
 
 # Retrieve/Update/Delete a resource
 class ResourceRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):

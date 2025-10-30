@@ -4,4 +4,5 @@ from .models import Resource
 class ResourceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Resource
-        fields = '__all__'
+        fields = ['id', 'name', 'location', 'capacity', 'file_path', 'is_active']
+        read_only_fields = ['id']
