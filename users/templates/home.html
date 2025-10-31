@@ -5,12 +5,13 @@
     <hr>
 
     {% if user.is_authenticated %}
-        <form action="{% url 'logout' %}" method="post">
+        <p>Welcome, <strong>{{ user.username }}</strong>!</p>
+        <form action="{% url 'users:logout' %}" method="post" style="display:inline;">
             {% csrf_token %}
-            <button type="submit">Log out</button>
+            <button type="submit" class="btn btn-danger">Log out</button>
         </form>
     {% else %}
-        <a href="{% url 'login' %}">Login</a> |
-        <a href="{% url 'register' %}">Register</a>
+        <a href="{% url 'users:login' %}" class="btn btn-primary">Login</a>
+        <a href="{% url 'users:register' %}" class="btn btn-success">Register</a>
     {% endif %}
 {% endblock %}
