@@ -20,8 +20,12 @@ from django.views.generic import TemplateView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+<<<<<<< Updated upstream:urls.py
     path('', TemplateView.as_view(template_name='home.html'), name='home'),
 
     path('users/', include('users.urls')),
 
+=======
+    path('', include('rooms.urls')),
+>>>>>>> Stashed changes:roomtime/urls.py
 ]
