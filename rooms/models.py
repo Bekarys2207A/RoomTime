@@ -1,8 +1,12 @@
 from django.db import models
 
+<<<<<<< Updated upstream
 # Create your models here.
 
 class Resource(models.Model):
+=======
+class Room_Resources(models.Model):
+>>>>>>> Stashed changes
     name = models.CharField(max_length=100)
     location = models.CharField(max_length=255)
     capacity = models.IntegerField()
