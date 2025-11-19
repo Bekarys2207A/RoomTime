@@ -1,42 +1,27 @@
-from rest_framework import generics, permissions
-from rest_framework.permissions import IsAdminUser, AllowAny
-from .models import Resource
+from rest_framework import generics
 from .serializer import ResourceSerializer
+from .models import Room_Resources
+from .logic_rooms import resource_queryset, resource_permissions, get_action
 
 # List & Filter resources
 class ResourceListCreateAPIView(generics.ListCreateAPIView):
-    queryset = Resource.objects.all()
     serializer_class = ResourceSerializer
-    
-    def get_queryset(self):
-        queryset = Resource.objects.all()
-        is_active = self.request.query_params.get('is_active')
-        location = self.request.query_params.get('location')
-        capacity = self.request.query_params.get('capacity')
-        if is_active is not None:
-            queryset = queryset.filter(is_active=is_active.lower() == 'true')
-        if location is not None:
-            queryset = queryset.filter(location__icontains=location)
-        if capacity is not None:
-            try:
-                queryset = queryset.filter(capacity__gte=int(capacity))
-            except ValueError:
-                pass
-    
-    permission_classes_by_action = {
-        'list': [AllowAny],
-        'create': [IsAdminUser],
-    }
 
     def get_permissions(self):
-        return [perm() for perm in self.permission_classes_by_action.get(self.action, [AllowAny])]
+        action = get_action(self.request.method)
+        return resource_permissions(self.request, action)
+
+    def get_queryset(self):
+        return resource_queryset(self.request)
 
 # Retrieve/Update/Delete a resource
 class ResourceRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Resource.objects.all()
     serializer_class = ResourceSerializer
 
     def get_permissions(self):
-        if self.request.method in ['PUT', 'DELETE']:
-            return [permissions.IsAdminUser()]
-        return [permissions.AllowAny()]
+        action = get_action(self.request.method, detail=True)
+        return resource_permissions(self.request, action)
+
+    def get_queryset(self):
+        # В логике на детальное представление чаще всего возвращают все объекты
+        return Room_Resources.objects.all()
