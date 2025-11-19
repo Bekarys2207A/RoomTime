@@ -1,12 +1,16 @@
+from django.urls import path
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status, permissions
+from rest_framework import permissions
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from rest_framework.permissions import IsAuthenticated
 import logging
+from django.conf import settings
+from django.core.mail import send_mail
 
 from .models import User, RefreshToken, PasswordResetToken
 from .serializers import (
@@ -15,10 +19,8 @@ from .serializers import (
 )
 from .utils import make_access_token, make_refresh_token, make_password_reset_token, verify_reset_token
 from .permissions import IsAuthenticatedJWT
-from .tasks import send_password_reset_email
 
 logger = logging.getLogger(__name__)
-
 
 error_responses = {
     400: openapi.Response("Bad Request"),
@@ -73,7 +75,12 @@ class LoginView(APIView):
         access = make_access_token(user)
         refresh = make_refresh_token()
         expires_at = timezone.now() + settings.JWT_REFRESH_TOKEN_LIFETIME
-        RefreshToken.objects.create(user=user, token=refresh, expires_at=expires_at)
+
+        RefreshToken.objects.create(
+            user=user,
+            token=refresh,
+            expires_at=expires_at
+        )
 
         return Response({
             "access_token": access,
@@ -90,7 +97,7 @@ class RefreshView(APIView):
         operation_summary="Refresh Tokens",
         operation_description="Rotates the refresh token and generates a new access token. The old refresh token becomes invalid.",
         request_body=RefreshSerializer,
-        responses={200: openapi.Response("Access and refresh tokens rotated"), **error_responses}
+        responses={200: openapi.Response("Tokens rotated"), **error_responses}
     )
     def post(self, request):
         serializer = RefreshSerializer(data=request.data)
@@ -108,19 +115,25 @@ class RefreshView(APIView):
                 logger.warning(f"Expired/revoked refresh token: {old_token}")
                 return Response({"detail": "Token expired or revoked."}, status=401)
 
-            # Rotate refresh token
             rtoken.revoked = True
             rtoken.save()
+
             new_refresh = make_refresh_token()
-            RefreshToken.objects.create(user=rtoken.user, token=new_refresh,
-                                        expires_at=timezone.now() + settings.JWT_REFRESH_TOKEN_LIFETIME)
+            RefreshToken.objects.create(
+                user=rtoken.user,
+                token=new_refresh,
+                expires_at=timezone.now() + settings.JWT_REFRESH_TOKEN_LIFETIME
+            )
 
         access = make_access_token(rtoken.user)
-        return Response({"access_token": access, "refresh_token": new_refresh})
+        return Response({
+            "access_token": access,
+            "refresh_token": new_refresh
+        })
 
 
 class LogoutView(APIView):
-    permission_classes = [IsAuthenticatedJWT]
+    permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
         tags=["Authentication"],
@@ -133,6 +146,7 @@ class LogoutView(APIView):
         token = request.data.get("refresh_token")
         if token:
             RefreshToken.objects.filter(token=token).update(revoked=True)
+
         return Response({"detail": "Logged out successfully."})
 
 
@@ -142,25 +156,33 @@ class ForgotView(APIView):
     @swagger_auto_schema(
         tags=["Authentication"],
         operation_summary="Request Password Reset",
-        operation_description="Sends a password reset link to the specified email address if the user exists.",
+        operation_description="Sends a password reset link to the specified email if the user exists.",
         request_body=ForgotSerializer,
-        responses={200: openapi.Response("Password reset email sent"), **error_responses}
+        responses={200: openapi.Response("Email sent"), **error_responses}
     )
     def post(self, request):
         serializer = ForgotSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
         email = serializer.validated_data["email"]
 
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
+        user = User.objects.filter(email=email).first()
+        if not user:
             return Response({"detail": "If email exists, reset link sent."}, status=200)
 
         token = make_password_reset_token(user)
         link = f"{settings.FRONTEND_URL}/reset-password?token={token}"
-        send_password_reset_email.delay(user.email, link)
+
+        send_mail(
+            subject="Reset Your Password",
+            message=f"Click this link to reset your password: {link}",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            fail_silently=True
+        )
 
         logger.info(f"Password reset requested for {email}")
+
         return Response({"detail": "If email exists, reset link sent."}, status=200)
 
 
@@ -170,13 +192,14 @@ class ResetView(APIView):
     @swagger_auto_schema(
         tags=["Authentication"],
         operation_summary="Reset Password",
-        operation_description="Resets the user's password using the provided token and sets a new password.",
+        operation_description="Resets the password using the provided token.",
         request_body=ResetSerializer,
-        responses={200: openapi.Response("Password successfully reset"), **error_responses}
+        responses={200: openapi.Response("Password reset"), **error_responses}
     )
     def post(self, request):
         serializer = ResetSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
         token = serializer.validated_data["token"]
         new_password = serializer.validated_data["new_password"]
 
@@ -186,37 +209,46 @@ class ResetView(APIView):
 
         with transaction.atomic():
             user = get_object_or_404(User, id=payload["user_id"])
+
             prt, _ = PasswordResetToken.objects.get_or_create(
                 token=token,
-                defaults={"user": user, "expires_at": timezone.now() + settings.JWT_RESET_TOKEN_LIFETIME}
+                defaults={
+                    "user": user,
+                    "expires_at": timezone.now() + settings.JWT_RESET_TOKEN_LIFETIME
+                }
             )
+
             if prt.used:
                 return Response({"detail": "Token already used."}, status=400)
 
             user.set_password(new_password)
             user.save()
+
             RefreshToken.objects.filter(user=user).update(revoked=True)
+
             prt.used = True
             prt.save()
 
         logger.info(f"Password successfully reset for {user.email}")
+
         return Response({"detail": "Password successfully reset."})
 
 
 class MeView(APIView):
-    permission_classes = [IsAuthenticatedJWT]
+    permission_classes = [IsAuthenticated]  # Используем стандартную аутентификацию
 
     @swagger_auto_schema(
         tags=["Authentication"],
         operation_summary="Get Current User",
-        operation_description="Returns detailed information about the currently authenticated user.",
-        responses={200: openapi.Response("Current user data"), **error_responses}
+        operation_description="Returns authenticated user's information.",
+        responses={200: openapi.Response("User data"), **error_responses}
     )
     def get(self, request):
-        if not request.user_id:
-            return Response({"detail": "Unauthorized"}, status=401)
+        user = request.user
         return Response({
-            "id": request.user_id,
-            "role": request.user_role,
-            "payload": request.user_jwt
+            "id": user.id,
+            "email": user.email,
+            "username": user.username,
+            "role": user.role,
+            "created_at": user.created_at
         })
