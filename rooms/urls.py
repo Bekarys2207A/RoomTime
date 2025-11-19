@@ -1,6 +1,7 @@
 from django.urls import path
-from . import views
+from .views import ResourceListCreateAPIView, ResourceRetrieveUpdateDestroyAPIView
 
 urlpatterns = [
-    path('', views.get_rooms, name='get_rooms'),
+    path('', ResourceListCreateAPIView.as_view(), name='resource-list-create'),
+    path('<int:pk>/', ResourceRetrieveUpdateDestroyAPIView.as_view(), name='resource-detail-update-delete'),
 ]
