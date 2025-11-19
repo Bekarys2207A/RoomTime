@@ -29,3 +29,13 @@ class RefreshToken(models.Model):
     def __str__(self):
         return f"Token for {self.user.email} (revoked={self.revoked})"
     
+
+class PasswordResetToken(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    token = models.CharField(max_length=255, unique=True)
+    used = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+
+    def __str__(self):
+        return f"ResetToken for {self.user.email} (used={self.used})"

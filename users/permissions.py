@@ -5,7 +5,7 @@ class IsAuthenticatedJWT(BasePermission):
     message = "Authentication credentials were not provided or are invalid."
 
     def has_permission(self, request, view):
-        return getattr(request, "user_obj", None) is not None
+        return getattr(request, "user_jwt", None) is not None
 
 
 class IsAdmin(BasePermission):
@@ -13,12 +13,20 @@ class IsAdmin(BasePermission):
     message = "Admin privileges required."
 
     def has_permission(self, request, view):
-        user = getattr(request, "user_obj", None)
-        return user is not None and user.role == "admin"
+        role = getattr(request, "user_role", None)
+        return role == "admin"
 
 
 class IsAdminOrOwner(BasePermission):
-    """Админ или владелец объекта (например, своей брони)."""
+    """
+    Доступ для администратора или владельца объекта.
+    Объект должен иметь поле `user`.
+    """
+    message = "Admin or owner privileges required."
+
     def has_object_permission(self, request, view, obj):
-        user = getattr(request, "user_obj", None)
-        return user and (user.role == "admin" or getattr(obj, "user", None) == user)
+        user_id = getattr(request, "user_id", None)
+        role = getattr(request, "user_role", None)
+        if role == "admin":
+            return True
+        return hasattr(obj, "user") and getattr(obj.user, "id", None) == user_id

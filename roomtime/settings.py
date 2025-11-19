@@ -42,13 +42,15 @@ INSTALLED_APPS = [
     'rooms',
     'bookings',
     'rest_framework',
+    "rest_framework_simplejwt",
     'drf_yasg',
+    'django_celery_results',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'users.middleware.JWTAuthenticationMiddleware',
+    # 'users.middleware.JWTAuthenticationMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -126,20 +128,29 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AUTH_USER_MODEL = 'users.User'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': [
-        "users.permissions.IsAuthenticatedJWT",
-    ]
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "5/min",
+        "user": "10/min",
+        "login": "5/min",
+        "forgot": "3/min",
+    },
 }
-
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
-AUTH_USER_MODEL = 'users.User'
 
 
 JWT_ALGORITHM = env("JWT_ALGORITHM")
@@ -147,10 +158,12 @@ JWT_ACCESS_TOKEN_LIFETIME = timedelta(minutes=env.int("JWT_ACCESS_TOKEN_LIFETIME
 JWT_REFRESH_TOKEN_LIFETIME = timedelta(days=env.int("JWT_REFRESH_TOKEN_LIFETIME_DAYS"))
 JWT_RESET_TOKEN_LIFETIME = timedelta(minutes=env.int("JWT_RESET_TOKEN_LIFETIME_MIN"))
 
+JWT_RESET_SECRET_KEY = env("JWT_RESET_SECRET_KEY")
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = 'no-reply@roomtime.local'
 
+FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:3000")
 
 SWAGGER_SETTINGS = {
     "SECURITY_DEFINITIONS": {
