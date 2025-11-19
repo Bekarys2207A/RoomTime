@@ -5,22 +5,27 @@ from rooms.models import Resource
 # Create your models here.
 
 class Booking(models.Model):
+    STATUS_PENDING = 'pending'
+    STATUS_CONFIRMED = 'confirmed'
+    STATUS_CANCELLED = 'cancelled'
+
     STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('confirmed', 'Confirmed'),
-        ('cancelled', 'Cancelled'),
+        (STATUS_PENDING, 'Pending'),
+        (STATUS_CONFIRMED, 'Confirmed'),
+        (STATUS_CANCELLED, 'Cancelled'),
     ]
-    
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bookings')
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE, related_name='bookings')
     starts_at = models.DateTimeField()
     ends_at = models.DateTimeField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=STATUS_PENDING)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         indexes = [
             models.Index(fields=['user', 'created_at']),
+            models.Index(fields=['resource', 'starts_at', 'ends_at']), 
         ]
         ordering = ['-created_at']
 
