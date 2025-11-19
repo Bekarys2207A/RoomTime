@@ -23,15 +23,5 @@
 - `?ordering=starts_at` - сортировка по времени начала
 - `?ordering=-created_at` - сортировка по дате создания (новые сначала)
 
-## Примеры запросов
-
-### Создание бронирования
-```http
-POST /api/bookings/
-Content-Type: application/json
-
-{
-  "resource": 1,
-  "starts_at": "2025-01-15T10:00:00Z",
-  "ends_at": "2025-01-15T12:00:00Z"
-}
+## Тесты
+pytest bookings/tests.py -v
