@@ -2,6 +2,8 @@ from django.db import models
 from users.models import User
 from rooms.models import Resource
 
+# Create your models here.
+
 class Booking(models.Model):
     STATUS_PENDING = 'pending'
     STATUS_CONFIRMED = 'confirmed'
@@ -28,18 +30,18 @@ class Booking(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"Booking by {self.user.email} for {self.resource.name} ({self.status})"
-
+        return f"Booking by {self.user.email} for {self.resource.name} ({self.status})"    
+    
 
 class FileUpload(models.Model):
-    owner_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='uploads')
+    owner_user = models.ForeignKey(User, on_delete=models.CASCADE)
     path = models.CharField(max_length=255)
     size_bytes = models.PositiveIntegerField()
     mime = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
-
+    
     def __str__(self):
-        return f"File by {self.owner_user.email} ({self.mime}, {self.size_bytes} bytes)"
+        return f"FileUpload by {self.owner_user.email} - {self.path}"
 
 
 class AuditLog(models.Model):
@@ -49,6 +51,6 @@ class AuditLog(models.Model):
     entity_id = models.IntegerField()
     meta = models.JSONField(default=dict)
     ts = models.DateTimeField(auto_now_add=True)
-
+    
     def __str__(self):
         return f"{self.actor_user.email} - {self.action} ({self.entity})"
