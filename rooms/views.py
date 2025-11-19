@@ -1,12 +1,3 @@
-<<<<<<< Updated upstream
-from django.shortcuts import render
-from django.http import JsonResponse
-
-# Create your views here.
-
-def get_rooms(request):
-    return JsonResponse({"message": "Rooms API is working correctly!"})
-=======
 from rest_framework import generics
 from .serializer import ResourceSerializer
 from .models import Room_Resources
@@ -34,4 +25,3 @@ class ResourceRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView
     def get_queryset(self):
         # В логике на детальное представление чаще всего возвращают все объекты
         return Room_Resources.objects.all()
->>>>>>> Stashed changes

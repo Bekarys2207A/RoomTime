@@ -1,12 +1,7 @@
 from django.db import models
 
-<<<<<<< Updated upstream
-# Create your models here.
 
-class Resource(models.Model):
-=======
 class Room_Resources(models.Model):
->>>>>>> Stashed changes
     name = models.CharField(max_length=100)
     location = models.CharField(max_length=255)
     capacity = models.IntegerField()
@@ -24,7 +19,7 @@ class TimeSlot(models.Model):
         ('booked', 'Booked'),
     ]
     
-    resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
+    resource = models.ForeignKey(Room_Resources, on_delete=models.CASCADE)
     starts_at = models.DateTimeField()
     ends_at = models.DateTimeField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available')

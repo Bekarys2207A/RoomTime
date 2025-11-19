@@ -157,7 +157,6 @@ AUTH_USER_MODEL = 'users.User'
 
 
 REST_FRAMEWORK = {
-<<<<<<< Updated upstream
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -172,13 +171,8 @@ REST_FRAMEWORK = {
         "login": "5/min",
         "forgot": "3/min",
     },
-=======
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
-    ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 3,
->>>>>>> Stashed changes
 }
 
 
