@@ -2,13 +2,12 @@ services:
   app:
     build:
       context: .
-      dockerfile: app/Dockerfile
+
     container_name: roomtime_app
     env_file:
       - .env
     volumes:
       - .:/app
-      - uploads:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
