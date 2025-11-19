@@ -1,6 +1,10 @@
 from django.urls import path
-from . import views
+from rest_framework.routers import DefaultRouter
+from .views import BookingViewSet, resource_availability
+
+router = DefaultRouter()
+router.register(r'', BookingViewSet, basename='bookings')
 
 urlpatterns = [
-    path('', views.get_bookings, name='get_bookings'),
-]
+    path('resources/<int:resource_id>/availability/', resource_availability, name='resource-availability'),
+] + router.urls
