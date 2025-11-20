@@ -2,7 +2,6 @@ from django.db import models
 from users.models import User
 from rooms.models import Room_Resources
 
-# Create your models here.
 
 class Booking(models.Model):
     STATUS_PENDING = 'pending'
