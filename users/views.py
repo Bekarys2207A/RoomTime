@@ -65,7 +65,7 @@ class LoginView(APIView):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            logger.warning(f"Failed login attempt for {email}")
+            logger.warning(f"Failed login attempt for {email}!")
             return Response({"detail": "Invalid credentials."}, status=401)
 
         if not user.check_password(password):
