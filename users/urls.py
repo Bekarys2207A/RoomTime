@@ -7,7 +7,6 @@ from .views import (
     ForgotView, ResetView, MeView
 )
 
-# Swagger / OpenAPI Schema
 schema_view = get_schema_view(
     openapi.Info(
         title="RoomTime Users API",
@@ -33,7 +32,6 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
-    # Authentication Endpoints
     path("register/", RegisterView.as_view(), name="register"),
     path("login/", LoginView.as_view(), name="login"),
     path("refresh/", RefreshView.as_view(), name="refresh"),
@@ -42,7 +40,5 @@ urlpatterns = [
     path("reset/", ResetView.as_view(), name="reset"),
     path("me/", MeView.as_view(), name="me"),
 
-    # API Documentation
     path("docs/", schema_view.with_ui("swagger", cache_timeout=0), name="users-swagger-ui"),
-    path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="users-redoc"),
 ]
