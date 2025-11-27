@@ -1,10 +1,7 @@
 from django.db import models
 from users.models import User
 from rooms.models import Room_Resources
-<<<<<<< Updated upstream
 
-=======
->>>>>>> Stashed changes
 
 class Booking(models.Model):
     STATUS_PENDING = 'pending'
