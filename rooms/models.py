@@ -10,26 +10,3 @@ class Room_Resources(models.Model):
     
     def __str__(self):
         return f"{self.name} ({self.location})"
-
-
-class TimeSlot(models.Model):
-    STATUS_CHOICES = [
-        ('available', 'Available'),
-        ('held', 'Held'),
-        ('booked', 'Booked'),
-    ]
-    
-    resource = models.ForeignKey(Room_Resources, on_delete=models.CASCADE)
-    starts_at = models.DateTimeField()
-    ends_at = models.DateTimeField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available')
-    
-    class Meta:
-        indexes = [
-            models.Index(fields=['resource', 'starts_at']),
-            models.Index(fields=['starts_at', 'ends_at']),
-        ]
-        ordering = ['starts_at']
-
-    def __str__(self):
-        return f"{self.resource.name} | {self.starts_at} - {self.ends_at} [{self.status}]"
