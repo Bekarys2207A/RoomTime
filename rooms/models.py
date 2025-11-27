@@ -1,6 +1,9 @@
 from django.db import models
 
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 class Room_Resources(models.Model):
     name = models.CharField(max_length=100)
     location = models.CharField(max_length=255)
