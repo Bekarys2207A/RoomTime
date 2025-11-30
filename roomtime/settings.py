@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'django_celery_results',
     'drf_spectacular',
+    'corsheaders',
 ]
 
 REST_FRAMEWORK = {
@@ -71,6 +72,7 @@ SPECTACULAR_SETTINGS = {
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -232,3 +234,5 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(hour=3, minute=0),
     },
 }
+
+CORS_ALLOW_ALL_ORIGINS = True
