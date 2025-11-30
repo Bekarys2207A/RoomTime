@@ -14,7 +14,7 @@ def get_filtered_resources(request):
     if location:
         queryset = repo.filter_by_location(queryset, location)
     
-    # Apply capacity filter
+    # Apply capacity filter≈
     capacity_param = request.query_params.get('capacity')
     if capacity_param:
         try:

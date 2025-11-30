@@ -19,6 +19,7 @@ services:
     image: postgres:16
     container_name: roomtime_postgres
     restart: always
+    platform: linux/amd64
     env_file:
       - .env
     volumes:
@@ -36,6 +37,7 @@ services:
     image: redis:7
     container_name: roomtime_redis
     restart: always
+    platform: linux/amd64
     ports:
       - "6379:6379"
 
@@ -43,6 +45,7 @@ services:
     image: mailhog/mailhog
     container_name: roomtime_mailhog
     restart: always
+    platform: linux/amd64
     ports:
       - "1025:1025"
       - "8025:8025"
