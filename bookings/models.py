@@ -1,6 +1,6 @@
 from django.db import models
 from users.models import User
-from rooms.models import Resource
+from rooms.models import Room_Resources
 
 class Booking(models.Model):
     STATUS_PENDING = 'pending'
@@ -14,7 +14,7 @@ class Booking(models.Model):
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bookings')
-    resource = models.ForeignKey(Resource, on_delete=models.CASCADE, related_name='bookings')
+    resource = models.ForeignKey(Room_Resources, on_delete=models.CASCADE, related_name='bookings')
     starts_at = models.DateTimeField()
     ends_at = models.DateTimeField()
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=STATUS_PENDING)

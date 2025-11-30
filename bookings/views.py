@@ -25,7 +25,6 @@ class BookingViewSet(viewsets.ModelViewSet):
     search_fields = ['resource__name', 'user__email']
 
     def perform_create(self, serializer):
-        # DRF best practice
         serializer.save(user=self.request.user)
 
     def get_queryset(self):
