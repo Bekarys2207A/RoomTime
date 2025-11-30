@@ -6,7 +6,7 @@ from rest_framework.pagination import LimitOffsetPagination
 from .models import Booking, AuditLog
 from .serializers import BookingSerializer
 from .services import create_booking
-from rooms.models import Resource
+from rooms.models import Room_Resources
 from datetime import datetime
 
 class BookingPagination(LimitOffsetPagination):
@@ -85,8 +85,8 @@ def resource_availability(request, resource_id):
         return Response({"error": "Неверный формат даты. Используйте YYYY-MM-DD"}, status=400)
 
     try:
-        resource = Resource.objects.get(pk=resource_id, is_active=True)
-    except Resource.DoesNotExist:
+        resource = Room_Resources.objects.get(pk=resource_id, is_active=True)
+    except Room_Resources.DoesNotExist:
         return Response({"error": "Ресурс не найден или неактивен"}, status=404)
 
     start_of_day = datetime.combine(date_obj, datetime.min.time())
