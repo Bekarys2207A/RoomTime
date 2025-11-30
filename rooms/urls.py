@@ -1,7 +1,10 @@
-from django.urls import path
-from .views import ResourceListCreateAPIView, ResourceRetrieveUpdateDestroyAPIView
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views.room_resource_views import RoomResourceViewSet
+
+router = DefaultRouter()
+router.register(r'resources', RoomResourceViewSet, basename='resource')
 
 urlpatterns = [
-    path('', ResourceListCreateAPIView.as_view(), name='resource-list-create'),
-    path('<int:pk>/', ResourceRetrieveUpdateDestroyAPIView.as_view(), name='resource-detail-update-delete'),
+    path('', include(router.urls)),
 ]
