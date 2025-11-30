@@ -1,6 +1,13 @@
 from django.db import transaction
 from rest_framework import serializers
 from .models import Booking, AuditLog
+from celery import shared_task
+from django.utils import timezone
+from django.conf import settings
+from datetime import timedelta
+
+from django.core.cache import cache
+import redis
 
 @transaction.atomic
 def create_booking(user, validated_data):
@@ -27,3 +34,33 @@ def create_booking(user, validated_data):
     )
 
     return booking
+
+HOLD_TTL_MINUTES = 15
+r = redis.Redis.from_url(settings.REDIS_URL, decode_responses=True)
+
+@shared_task
+def release_holds():
+    now = timezone.now()
+    ttl = now - timedelta(minutes=HOLD_TTL_MINUTES)
+
+    expired = Booking.objects.filter(
+        status=Booking.STATUS_PENDING,
+        created_at__lt=ttl
+    )
+
+    booking_ids = list(expired.values_list("id", flat=True))
+    resource_ids = list(expired.values_list("resource_id", flat=True))
+
+    count = expired.count()
+
+    expired.update(status=Booking.STATUS_CANCELLED)
+
+
+    for b_id in booking_ids:
+        r.delete(f"booking_lock:{b_id}")
+
+    for r_id in resource_ids:
+        cache_key = f"availability:{r_id}"
+        cache.delete(cache_key)
+
+    return f"Released {count} expired holds"
