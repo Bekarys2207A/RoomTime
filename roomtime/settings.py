@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from datetime import timedelta
 from pathlib import Path
+from celery.schedules import crontab
 import environ
 import os
 
@@ -219,4 +220,15 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     }
+}
+
+CELERY_BEAT_SCHEDULE = {
+    "release-holds-every-2-minutes": {
+        "task": "bookings.tasks.release_holds",
+        "schedule": 120,
+    },
+    "cleanup-uploads-daily": {
+        "task": "core.tasks.cleanup_uploads",
+        "schedule": crontab(hour=3, minute=0),
+    },
 }
