@@ -10,7 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
+from celery.schedules import crontab
 import environ
 import os
 
@@ -22,10 +24,10 @@ env = environ.Env(
 )
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
+
 SECRET_KEY = env('SECRET_KEY')
 DEBUG = env('DEBUG')
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
-
 
 
 # Application definition
@@ -41,10 +43,26 @@ INSTALLED_APPS = [
     'rooms',
     'bookings',
     'rest_framework',
+    "rest_framework_simplejwt",
+    'drf_yasg',
+    'django_celery_results',
+    'drf_spectacular',
+    'corsheaders',
 ]
+
+
+
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'RoomTime API',
+    'DESCRIPTION': 'API для бронирования помещений',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -123,17 +141,90 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AUTH_USER_MODEL = 'users.User'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
+
 REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
-    ]
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "5/min",
+        "user": "10/min",
+        "login": "5/min",
+        "forgot": "3/min",
+    },
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 3,
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+JWT_ALGORITHM = env("JWT_ALGORITHM")
+JWT_ACCESS_TOKEN_LIFETIME = timedelta(minutes=env.int("JWT_ACCESS_TOKEN_LIFETIME_MIN"))
+JWT_REFRESH_TOKEN_LIFETIME = timedelta(days=env.int("JWT_REFRESH_TOKEN_LIFETIME_DAYS"))
+JWT_RESET_TOKEN_LIFETIME = timedelta(minutes=env.int("JWT_RESET_TOKEN_LIFETIME_MIN"))
 
-AUTH_USER_MODEL = 'users.User'
+JWT_RESET_SECRET_KEY = env("JWT_RESET_SECRET_KEY")
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'no-reply@roomtime.local'
+
+FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:3000")
+
+SWAGGER_SETTINGS = {
+    "SECURITY_DEFINITIONS": {
+        "Bearer": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header",
+            "description": "Введите токен в формате: Bearer <access_token>",
+        }
+    },
+    "USE_SESSION_AUTH": True,
+}
+
+REDIS_URL = env('REDIS_URL')
+CACHE_URL = env('CACHE_URL')
+
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
+
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = TIME_ZONE
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": CACHE_URL,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
+CELERY_BEAT_SCHEDULE = {
+    "release-holds-every-2-minutes": {
+        "task": "bookings.tasks.release_holds",
+        "schedule": 120,
+    },
+    "cleanup-uploads-daily": {
+        "task": "core.tasks.cleanup_uploads",
+        "schedule": crontab(hour=3, minute=0),
+    },
+}
+
+CORS_ALLOW_ALL_ORIGINS = True
