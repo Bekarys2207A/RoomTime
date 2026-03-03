@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from datetime import timedelta
 from pathlib import Path
-from celery.schedules import crontab
 import environ
 import os
 
@@ -47,7 +46,6 @@ INSTALLED_APPS = [
     'drf_yasg',
     'django_celery_results',
     'drf_spectacular',
-    'corsheaders',
 ]
 
 
@@ -62,7 +60,6 @@ SPECTACULAR_SETTINGS = {
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -178,8 +175,14 @@ JWT_RESET_TOKEN_LIFETIME = timedelta(minutes=env.int("JWT_RESET_TOKEN_LIFETIME_M
 
 JWT_RESET_SECRET_KEY = env("JWT_RESET_SECRET_KEY")
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = 'no-reply@roomtime.local'
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# DEFAULT_FROM_EMAIL = 'no-reply@roomtime.local'
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "mailhog"
+EMAIL_PORT = 1025
+EMAIL_USE_TLS = False
+DEFAULT_FROM_EMAIL = "no-reply@roomtime.local"
 
 FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:3000")
 
@@ -215,16 +218,3 @@ CACHES = {
         }
     }
 }
-
-CELERY_BEAT_SCHEDULE = {
-    "release-holds-every-2-minutes": {
-        "task": "bookings.tasks.release_holds",
-        "schedule": 120,
-    },
-    "cleanup-uploads-daily": {
-        "task": "core.tasks.cleanup_uploads",
-        "schedule": crontab(hour=3, minute=0),
-    },
-}
-
-CORS_ALLOW_ALL_ORIGINS = True

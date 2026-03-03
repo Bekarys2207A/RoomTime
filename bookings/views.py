@@ -38,10 +38,11 @@ class BookingViewSet(viewsets.ModelViewSet):
             qs = qs.filter(user=self.request.user)
         return qs
 
-    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=['post'])
     def cancel(self, request, pk=None):
         booking = self.get_object()
-
+        if not request.user.is_superuser:
+            return Response(status_code=409,)
         if booking.user != request.user:
             return Response(
                 {"error": "Вы можете отменять только свои бронирования"},

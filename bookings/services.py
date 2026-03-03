@@ -35,7 +35,7 @@ def create_booking(user, validated_data):
 
     return booking
 
-HOLD_TTL_MINUTES = 15
+HOLD_TTL_MINUTES = 0
 r = redis.Redis.from_url(settings.REDIS_URL, decode_responses=True)
 
 @shared_task
